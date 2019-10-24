@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>zkStrata Playground</title>
+        
+        <!-- CodeMirror -->
+	    <link rel="stylesheet" href="node_modules/codemirror/lib/codemirror.css">
+        <style>
+            html {
+                position: relative;
+                min-height: 100%;
+            }
+            main {
+                margin-bottom: 70px;
+            }
+            footer {
+                position: fixed;
+                bottom: 0;
+                width: 100%;
+                height: 70px;
+                line-height: 64px;
+                background-color: #F7F7F7;
+                border-top: 1px solid #DDDDDD;
+                z-index: 10;
+            }
+            .cursor-pointer {
+                cursor: pointer;
+            }
+            .CodeMirror {
+                border: 1px solid #eee; 
+                min-height: 50px;
+            }
+            #schema {
+                height: 500px;
+            }
+            .schema-wrapper .CodeMirror {
+                height: auto;
+            }
+            .no-action label {
+                margin-bottom: 0;
+            }
+            .no-action .btn-outline-secondary:not(.active):hover,
+            .no-action .btn-outline-secondary:not(.active):active {
+                color: #6c757d !important;
+                background-color: rgba(0, 0, 0, 0) !important;
+            }
+            .no-action .btn-outline-primary:not(.active):hover,
+            .no-action .btn-outline-primary:not(.active):active {
+                color: #007bff !important;
+                background-color: rgba(0, 0, 0, 0) !important;
+            }
+            #toast_wrapper {
+                z-index: 10;
+                pointer-events: none;
+                position: fixed; 
+                bottom: 80px; 
+                right: 10px;
+            }
+            .toast.show {
+                pointer-events: all;
+            }
+            .toast-body .table th,
+            .toast-body .table td {
+                padding: 0.25rem 0.75rem;
+            }
+            .toast.full-width-toast {
+                max-width: none;
+            }
+        </style>
+    </head>
+    <body>
+        <main role="main" class="container py-4">
+            <h1 class="display-4">zkStrata</h1>
+            <div class="row">
+                <div class="col-xl">
+                    <h2 class="my-3">Statement <small>(.zkstrata)</small></h2>
+                    <textarea id="statement">PROOF FOR
+    passport_ch AS pass
+THAT
+    pass.firstName IS EQUAL TO 'John'
+AND
+    pass.dateOfBirth.year IS LESS THAN 2001</textarea>
+                </div>
+                <div class="col-xl">
+                    <h2 class="my-3">Witnesses <small>(.json)</small></h2>
+                    <textarea id="witness">{
+    "pass": {
+        "firstName": "John",
+        "lastName": "Doe",
+        "dateOfBirth": {
+            "day": 1,
+            "month": 1,
+            "year": 1970
+        },
+        "placeOfBirth": "Timbuktu"
+    }
+}</textarea>
+                </div>
+            </div>
+            <div class="schema-wrapper">
+            <h2 class="my-3">Schema <small>(.schema.json)</small></h2>
+            <textarea id="schema">{
+    "title": "passport_ch",
+    "type": "object",
+    "properties": {
+        "firstName": {
+            "type": "string",
+            "description": "The owner's first name."
+        },
+        "lastName": {
+            "type": "string",
+            "description": "The owner's last name."
+        },
+        "dateOfBirth": {
+            "description": "The owner's date of birth.",
+            "type": "object",
+            "properties": {
+                "day": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 31
+                },
+                "month": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 12
+                },
+                "year": {
+                    "type": "number"
+                }
+            }
+        },
+        "placeOfBirth": {
+            "type": "string",
+            "description": "The owner's place of birth."
+        }
+    }
+}</textarea>
+            </div>
+        </main>
+        <footer>
+            <div class="container">
+                <label class="mr-2">Mode:</label>
+                <div class="btn-group no-action">
+                    <label class="btn btn-outline-primary active" id="mode_prover">Prover</label>
+                    <label class="btn btn-outline-primary" id="mode_verifier">Verifier</label>
+                </div>
+                <button type="button" class="btn btn-success mx-4" id="btn-run" onclick="run()">Generate Proof</button>
+                <button type="button" class="btn btn-outline-danger d-none" id="reset" onclick="reset()">Reset</button>
+            </div>
+        </footer>
+        <div id="toast_wrapper">
+            <div id="prover_success_toast" class="toast" role="alert" data-autohide="false">
+                <div class="toast-header">
+                    <strong class="mr-auto">Successfully Generated Proof <span class="identifier"></span></strong>
+                    <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="toast-body">
+                    <table class="table table-borderless mb-0">
+                        <tbody>
+                            <tr>
+                                <th scope="row">Compilation Time:</th>
+                                <td class="compilation-time"></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Proving Time:</th>
+                                <td class="proving-time"></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Constraints:</th>
+                                <td class="constraints"></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Proof Size:</th>
+                                <td class="proof-size"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="compiler_error_toast" class="toast full-width-toast" role="alert" data-autohide="false">
+                <div class="toast-header">
+                    <strong class="mr-auto">Compilation of Proof <span class="identifier"></span> failed</strong>
+                    <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="toast-body">
+                    <pre class="message mb-0"></pre>
+                </div>
+            </div>
+            <div id="prover_error_toast" class="toast" role="alert" data-autohide="false">
+                <div class="toast-header">
+                    <strong class="mr-auto">Generation of Proof <span class="identifier"></span> failed</strong>
+                    <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            </div>
+            <div id="verifier_success_toast" class="toast" role="alert" data-autohide="false">
+                <div class="toast-header">
+                    <strong class="mr-auto">Successfully Verified Proof <span class="identifier"></span></strong>
+                    <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="toast-body">
+                    <table class="table table-borderless mb-0">
+                        <tbody>
+                            <tr>
+                                <th scope="row">Verification Time:</th>
+                                <td class="verification-time"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="verifier_error_toast" class="toast" role="alert" data-autohide="false">
+                <div class="toast-header">
+                    <strong class="mr-auto">Verification of Proof <span class="identifier"></span> failed</strong>
+                    <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bootstrap -->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>        <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>-->
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+        <script src="node_modules/codemirror/lib/codemirror.js"></script>
+        <script src="node_modules/codemirror/mode/javascript/javascript.js"></script>
+        <script>
+            var statement_editor = CodeMirror.fromTextArea(statement, {
+              lineNumbers: true,
+              mode: null
+            });
+            var witness_editor = CodeMirror.fromTextArea(witness, {
+              lineNumbers: true,
+              mode: "application/json"
+            });
+            CodeMirror.fromTextArea(schema, {
+              lineNumbers: true,
+              readOnly: "nocursor",
+              mode: "application/json"
+            });
+
+            var modeIsProver = true;
+            var statement_id = null;
+
+            function setMode(value) {
+                modeIsProver = value;
+                if (modeIsProver) {
+                    $('#btn-run').text('Generate Proof').prop('disabled', false).removeClass('disabled');
+                    $('#mode_prover').addClass('active');
+                    $('#mode_verifier').removeClass('active');
+                    $('#reset').addClass('d-none');
+                } else {
+                    $('#btn-run').text('Verify Proof').prop('disabled', false).removeClass('disabled');
+                    $('#mode_prover').removeClass('active');
+                    $('#mode_verifier').addClass('active');
+                    $('#reset').removeClass('d-none');
+                }
+            }
+
+            function reset() {
+                statement_id = null;
+                setMode(true);
+            }
+
+            function run() {
+                $('#btn-run').prop('disabled', true).addClass('disabled');
+                if(modeIsProver) {
+                    $('#btn-run').text('Generating Proof...');
+                    $.post('/exec', {
+                        statement: statement_editor.getValue(),
+                        witness: witness_editor.getValue()
+                    }, function(data) {
+                        var result = JSON.parse(data);
+                        if (result.success) {
+                            setMode(false);
+                            statement_id = result.id;
+                            proverSuccessToast(result);
+                        } else {
+                            if (result.type == "compilation") {
+                                compilerErrorToast(result);
+                            } else {
+                                proverErrorToast(result);
+                            }
+                            reset();
+                        }
+                    });
+                } else {
+                    if (statement_id != null) {
+                        $('#btn-run').text('Verfying Proof...');
+                        $.post('/exec', {
+                            statement_id: statement_id
+                        }, function(data) {
+                            var result = JSON.parse(data);
+                            if (result.success) {
+                                verifierSuccessToast(result);
+                            } else {
+                                verifierErrorToast(result);
+                            }
+                            reset();
+                        });
+                    }
+                }
+            }
+
+            function proverSuccessToast(result) {
+                let toast = $('#prover_success_toast').clone().appendTo('#toast_wrapper').attr('id', result.id);
+                toast.find('.identifier').text(`#${result.id}`);
+                toast.find('.compilation-time').text(`${(result.compilation_time / 1000).toFixed(2)}s`);
+                toast.find('.proving-time').text(`${(result.proving_time / 1000).toFixed(2)}s`);
+                toast.find('.constraints').text(result.constraints);
+                toast.find('.proof-size').text(`${result.proof} Bytes`);
+                toast.toast('show');
+            }
+
+            function compilerErrorToast(result) {
+                let toast = $('#compiler_error_toast').clone().appendTo('#toast_wrapper').attr('id', result.id);
+                toast.find('.identifier').text(`#${result.id}`);
+                toast.find('.message').text($.trim(decodeURI(result.message)));
+                toast.toast('show');
+            }
+
+            function proverErrorToast(result) {
+                let toast = $('#prover_error_toast').clone().appendTo('#toast_wrapper').attr('id', result.id);
+                toast.find('.identifier').text(`#${result.id}`);
+                toast.toast('show');
+            }
+
+            function verifierSuccessToast(result) {
+                let toast = $('#verifier_success_toast').clone().appendTo('#toast_wrapper').attr('id', result.id);
+                toast.find('.identifier').text(`#${result.id}`);
+                toast.find('.verification-time').text(`${(result.verification_time / 1000).toFixed(2)}s`);
+                toast.toast('show');
+            }
+
+            function verifierErrorToast(result) {
+                let toast = $('#verifier_error_toast').clone().appendTo('#toast_wrapper').attr('id', result.id);
+                toast.find('.identifier').text(`#${result.id}`);
+                toast.toast('show');
+            }
+        </script>
+    </body>
+</html>

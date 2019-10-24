@@ -1,0 +1,9 @@
+[submodule "zkStrata"]
+	path = zkStrata
+	url = https://github.com/MarcKloter/zkStrata
+[submodule "bulletproofs_gadgets"]
+	path = bulletproofs_gadgets
+	url = https://github.com/MarcKloter/bulletproofs_gadgets
+[submodule "bulletproofs"]
+	path = bulletproofs
+	url = https://github.com/MarcKloter/bulletproofs
