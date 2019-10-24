@@ -9,7 +9,7 @@ var app = connect();
 const port = 3000;
 
 const zkstratac = '../../zkStrata/target/zkstratac.jar';
-const bulletproofs_gadgets = "--manifest-path ../../bulletproofs_gadgets/Cargo.toml";
+const bulletproofs_gadgets = '--manifest-path ../../bulletproofs_gadgets/Cargo.toml';
 const target = 'target';
 
 app.use('/exec', function(req, res){
@@ -49,7 +49,7 @@ function prover(args, res) {
     // write statement
     let statement = `${id}.zkstrata`;
     fs.writeFileSync(`${dir}/${statement}`, args.statement);
-    cmd += ` & java -jar ${zkstratac} --statement ${statement}`;
+    cmd += ` && java -jar ${zkstratac} --statement ${statement}`;
 
     // write witness
     let witness_obj = JSON.parse(args.witness);
@@ -63,17 +63,19 @@ function prover(args, res) {
     let compile_start = new Date();
     exec(cmd, (err, stdout, stderr) => {
         if(!fs.existsSync(`${dir}/${id}.gadgets`)) {
+            console.log(err);
             res.end(`{"id":"${id}", "success":false, "type":"compilation", "message": "${encodeURI(stdout)}"}`);
         }
 
         let compile_time = new Date() - compile_start;
 
         // execute prover
-        cmd = `cd ${dir} & cargo run ${bulletproofs_gadgets} --bin prover ${id}`;
+        cmd = `cd ${dir} && cargo run ${bulletproofs_gadgets} --bin prover ${id}`;
 
         let prover_start = new Date();
         exec(cmd, (err, stdout, stderr) => {
             if (err) {
+                console.log(err);
                 res.end(`{"id":"${id}", "success":false, "type":"proving"}`);
                 return;
             }
@@ -98,12 +100,13 @@ function verifier(args, res) {
     let cmd = `cd ${dir}`;
 
     // execute verifier
-    cmd += ` & cargo run ${bulletproofs_gadgets} --bin verifier ${id}`;
+    cmd += ` && cargo run ${bulletproofs_gadgets} --bin verifier ${id}`;
 
     let start = new Date();
     exec(cmd, (err, stdout, stderr) => {
         let time = new Date() - start;
         if (err) {
+            console.log(err);
             res.end(`{"id":"${id}", "success":false}`);
             return;
         }
