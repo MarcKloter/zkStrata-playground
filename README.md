@@ -1,12 +1,17 @@
-Building the zkStrata compiler
-cd zkStrata
-mvn package
+# zkStrata-playground
+The zkStrata playground is a showcase of the [zkStrata language](https://github.com/MarcKloter/zkStrata), a declarative language for zero-knowledge proof specification over structured data.
 
-Building bulletproofs_gadgets:
-cd bulletproofs_gadgets
-cargo build
+The playground can be launched using [Docker](https://www.docker.com/).
 
-Launching the playground
-node app.js
+## Getting started
+1. Compiling the multi-stage build:
+   ```
+   docker image build -f playground.dockerfile -t playground .
+   ```
 
-http://localhost:3000/
+2. Running the container:
+   ```
+   docker container run --publish 8000:3000 --detach --name pg playground
+   ```
+
+3. The playground will be available at http://localhost:8000/.
