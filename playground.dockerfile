@@ -1,4 +1,4 @@
-# multistage build of the zkstrata-playground
+# multi-stage build of the zkstrata-playground
 
 # setup bulletproofs_gadgets
 FROM rust:1.38-slim
