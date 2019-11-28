@@ -66,6 +66,8 @@
             .toast.full-width-toast {
                 max-width: none;
             }
+            .cm-s-zkstrata .cm-keyword {color: #00f;}
+            .cm-s-zkstrata .cm-number {color: #09885A;}
         </style>
     </head>
     <body>
@@ -75,7 +77,7 @@
                 <div class="col-xl">
                     <h2 class="my-3">Statement <small>(.zkstrata)</small></h2>
                     <textarea id="statement">PROOF FOR
-    passport_ch AS pass
+    WITNESS pass COMPLIANT TO passport_ch
 THAT
     pass.firstName IS EQUAL TO 'John'
 AND
@@ -233,10 +235,12 @@ AND
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
         <script src="node_modules/codemirror/lib/codemirror.js"></script>
         <script src="node_modules/codemirror/mode/javascript/javascript.js"></script>
+        <script src="zkstrata.js"></script>
         <script>
             var statement_editor = CodeMirror.fromTextArea(statement, {
               lineNumbers: true,
-              mode: null
+              mode: "zkstrata",
+              theme: "default zkstrata"
             });
             var witness_editor = CodeMirror.fromTextArea(witness, {
               lineNumbers: true,
