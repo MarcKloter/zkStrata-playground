@@ -1,12 +1,13 @@
 # multi-stage build of the zkstrata-playground
 
 # setup bulletproofs_gadgets
-FROM rust:1.38-slim
+FROM rust:1.39-slim
 WORKDIR /bulletproofs
 ADD bulletproofs_gadgets bulletproofs_gadgets
 WORKDIR /bulletproofs/bulletproofs_gadgets
+RUN rustup set profile minimal
 RUN rustup install nightly-2019-10-26
-RUN cargo +nightly-2019-10-26 build --bins --quiet
+RUN cargo +nightly-2019-10-26 build --bins --release --quiet
 
 # setup zkstratac
 FROM maven:3.6.2-jdk-11-slim
