@@ -12,6 +12,7 @@ const java = '../../jdk-11/bin/java';
 const zkstratac = '../../zkstratac.jar';
 const bulletproofs_gadgets_prover = '../../prover';
 const bulletproofs_gadgets_verifier = '../../verifier';
+const passport_schema = 'passport.schema.json';
 const target = 'target';
 
 app.use('/exec', function(req, res){
@@ -48,10 +49,19 @@ function prover(args, res) {
     fs.mkdirSync(dir);
     let cmd = `cd ${dir}`;
 
+    // copy schema
+    fs.copyFile(passport_schema, `${dir}/${passport_schema}`, (err) => {
+        if (err) {
+            console.log(err);
+            res.end(`{"id":"${id}", "success":false, "type":"compilation"}`);
+            return;
+        };
+    });
+
     // write statement
     let statement = `${id}.zkstrata`;
     fs.writeFileSync(`${dir}/${statement}`, args.statement);
-    cmd += ` && ${java} -jar ${zkstratac} --statement ${statement}`;
+    cmd += ` && ${java} -jar ${zkstratac} --statement ${statement} --schema passport_ch=${passport_schema}`;
 
     // write witness
     let witness_obj = JSON.parse(args.witness);

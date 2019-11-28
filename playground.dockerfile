@@ -18,10 +18,10 @@ RUN mvn --quiet package
 # setup playground nodejs server
 FROM node:8.16.2
 WORKDIR /playground/node
-COPY --from=0 /bulletproofs/bulletproofs_gadgets/target/debug/prover .
-COPY --from=0 /bulletproofs/bulletproofs_gadgets/target/debug/verifier .
+COPY --from=0 /bulletproofs/bulletproofs_gadgets/target/release/prover .
+COPY --from=0 /bulletproofs/bulletproofs_gadgets/target/release/verifier .
 COPY --from=1 /zkstratac/target/zkstratac.jar .
-COPY package.json package-lock.json index.html app.js ./
+COPY package.json package-lock.json index.html app.js zkstrata.js passport.schema.json ./
 RUN npm install
 RUN wget --quiet https://download.java.net/java/ga/jdk11/openjdk-11_linux-x64_bin.tar.gz
 RUN tar xf openjdk-11_linux-x64_bin.tar.gz
