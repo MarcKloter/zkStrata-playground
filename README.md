@@ -1,5 +1,7 @@
 # zkStrata-playground
-The zkStrata playground is a showcase of the [zkStrata language](https://github.com/MarcKloter/zkStrata), a declarative language for zero-knowledge proof specification over structured data.
+The zkStrata Playground is a showcase of the [zkStrata language](https://github.com/MarcKloter/zkStrata), a declarative language for zero-knowledge proof specification over structured data.
+
+![zkStrata-playground](zkstrata-playground.png)
 
 The playground can be launched using [Docker](https://www.docker.com/).
 
