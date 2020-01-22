@@ -10,7 +10,7 @@
 
 CodeMirror.defineMode("zkstrata", function() {
 
-  var keywords = set("as and compliant equal for greater instance is less member merkle of preimage proof root than that this to unequal witness");
+  var keywords = set("as and compliant equal for greater instance is less member merkle of or preimage proof root than that this to unequal witness");
 
   return {
     token: function(stream, state) {
@@ -40,12 +40,18 @@ CodeMirror.defineMode("zkstrata", function() {
       if (ch.charCodeAt(0) > 47 && ch.charCodeAt(0) < 58) 
         return "number";
 
+      /* constant */
+      if (ch == "_" && stream.match(/^[a-zA-Z]([a-zA-Z0-9_])*/))
+        return "constant";
+
       /* keywords */
       if (/\w/.test(ch)) {
         stream.eatWhile(/\w/);
         var word = stream.current().toLowerCase();
         if (keywords.hasOwnProperty(word)) 
           return "keyword";
+        if (set("true false").hasOwnProperty(word)) 
+          return "boolean";
       }
       
       /* nothing found, continue */
